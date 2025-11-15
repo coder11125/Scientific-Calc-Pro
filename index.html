@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     
     <!-- Link to external CSS -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
     
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -74,19 +74,9 @@
                 <button class="btn btn-sci" data-action="operator" data-value="^(" data-inv-value="^(1/" data-label="xʸ" data-inv-label="ʸ√x">xʸ</button>
                 <button class="btn btn-sci" data-action="function" data-value="sqrt(" data-inv-value="square(" data-label="√" data-inv-label="x²">√</button>
                 <button class="btn btn-sci" data-action="function" data-value="abs(" data-label="abs">abs</button>
-                <button class="btn btn-sci" data-action="function" data-value="permutations(" data-label="nPr">nPr</button>
-                <button class="btn btn-sci" data-action="function" data-value="combinations(" data-label="nCr">nCr</button>
-                <button class="btn btn-sci" data-action="function" data-value="1/(" data-inv-value="1/(" data-label="1/x" data-inv-label="1/x">1/x</button>
-            </div>
-            
-            <!-- Advanced Functions Grid (6 columns) -->
-            <div class="grid grid-cols-6 gap-2">
-                <button class="btn btn-sci" data-action="function" data-value="sinh(" data-label="sinh">sinh</button>
-                <button class="btn btn-sci" data-action="function" data-value="cosh(" data-label="cosh">cosh</button>
-                <button class="btn btn-sci" data-action="function" data-value="tanh(" data-label="tanh">tanh</button>
-                <button class="btn btn-sci" data-action="function" data-value="log2(" data-label="log₂">log₂</button>
-                <button class="btn btn-sci" data-action="command" data-value="statistics">Stats</button>
-                <button class="btn btn-sci" data-action="command" data-value="history">⟲</button>
+                <button class="btn btn-sci" data-action="function" data-value="permutations(", " data-label="nPr">nPr</button>
+                <button class="btn btn-sci" data-action="function" data-value="combinations(", " data-label="nCr">nCr</button>
+                <button class="btn btn-sci" data-action="function" data-value="1/(", " data-inv-value="1/(" data-label="1/x" data-inv-label="1/x">1/x</button>
             </div>
             
             <!-- Separator Line -->
@@ -119,34 +109,6 @@
                 <button class="btn btn-num" data-action="number" data-value=".">.</button>
                 <button class="btn btn-op" data-action="command" data-value="equals">=</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Statistics Modal -->
-    <div id="statisticsModal" class="modal-overlay hidden">
-        <div class="modal-content space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 class="text-2xl font-semibold text-gray-800">Statistics Calculator</h3>
-                <button id="closeStatisticsModal" class="modal-close-btn">&times;</button>
-            </div>
-            <p class="text-gray-600">Enter comma-separated numbers to calculate statistics.</p>
-            <div>
-                <textarea id="statisticsInput" class="w-full h-24 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10,20,30,40,50"></textarea>
-            </div>
-            <div id="statisticsResults" class="grid grid-cols-2 gap-2 text-sm"></div>
-            <button id="calculateStatistics" class="w-full btn btn-gemini">Calculate</button>
-        </div>
-    </div>
-
-    <!-- History Modal -->
-    <div id="historyModal" class="modal-overlay hidden">
-        <div class="modal-content space-y-4">
-            <div class="flex justify-between items-center">
-                <h3 class="text-2xl font-semibold text-gray-800">Calculation History</h3>
-                <button id="closeHistoryModal" class="modal-close-btn">&times;</button>
-            </div>
-            <div id="historyList" class="space-y-2 max-h-96 overflow-y-auto"></div>
-            <button id="clearHistory" class="w-full btn btn-ctrl">Clear History</button>
         </div>
     </div>
 
