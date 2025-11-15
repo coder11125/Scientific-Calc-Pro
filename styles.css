@@ -60,35 +60,3 @@ body {
 .modal-close-btn {
     @apply text-gray-400 float-right text-3xl font-bold hover:text-gray-600 focus:outline-none;
 }
-
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.modal-overlay:not(.hidden) .modal-content {
-    animation: fadeIn 0.2s ease-in-out;
-}
-
-/* Hover states for history items */
-.history-item {
-    @apply transition-all duration-150 hover:shadow-md;
-}
-
-/* Responsive adjustments */
-@media (max-width: 640px) {
-    .btn {
-        @apply text-lg h-14;
-    }
-    
-    .modal-content {
-        @apply w-full max-w-sm;
-    }
-}
