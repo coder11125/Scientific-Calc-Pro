@@ -6,6 +6,7 @@
     let isRadian = false; // Start in Degree mode
     let isInverted = false;
     let isSoundOn = true; // Default sound on
+    let calculationHistory = []; // Store calculation history
 
     // --- AUDIO ---
     let audioCtx;
@@ -43,15 +44,15 @@
         precision: 64
     });
     
-    // Add nPr and nCr to math.js instance
+    // Add custom functions to math.js instance
     mathInstance.import({
         permutations: function(n, k) {
-            if (k === undefined) k = n; // Handle permutations(n) as n!
+            if (k === undefined) k = n;
             if (typeof n !== 'number' || typeof k !== 'number') {
                 throw new Error('Invalid input for permutations');
             }
             if (k < 0 || k > n || !Number.isInteger(n) || !Number.isInteger(k)) {
-                return 0; // Or throw error for non-integer/invalid range
+                return 0;
             }
             if (k === 0) return 1;
             
@@ -66,12 +67,27 @@
                 throw new Error('Invalid input for combinations');
             }
             if (k < 0 || k > n || !Number.isInteger(n) || !Number.isInteger(k)) {
-                return 0; // Or throw error for non-integer/invalid range
+                return 0;
             }
             if (k === 0 || k === n) return 1;
-            if (k > n / 2) k = n - k; // More efficient calculation
+            if (k > n / 2) k = n - k;
             
             return mathInstance.divide(mathInstance.permutations(n, k), mathInstance.factorial(k));
+        },
+        square: function(x) {
+            return mathInstance.multiply(x, x);
+        },
+        sinh: function(x) {
+            return (Math.exp(x) - Math.exp(-x)) / 2;
+        },
+        cosh: function(x) {
+            return (Math.exp(x) + Math.exp(-x)) / 2;
+        },
+        tanh: function(x) {
+            return mathInstance.sinh(x) / mathInstance.cosh(x);
+        },
+        log2: function(x) {
+            return mathInstance.log(x) / mathInstance.log(2);
         }
     }, { override: true });
     
@@ -100,6 +116,18 @@
     const closeExplanationModal = document.getElementById('closeExplanationModal');
     const explanationContent = document.getElementById('explanationContent');
 
+    // Statistics Modal Elements
+    const statisticsModal = document.getElementById('statisticsModal');
+    const closeStatisticsModal = document.getElementById('closeStatisticsModal');
+    const statisticsInput = document.getElementById('statisticsInput');
+    const statisticsResults = document.getElementById('statisticsResults');
+    const calculateStatistics = document.getElementById('calculateStatistics');
+
+    // History Modal Elements
+    const historyModal = document.getElementById('historyModal');
+    const closeHistoryModal = document.getElementById('closeHistoryModal');
+    const historyList = document.getElementById('historyList');
+    const clearHistoryBtn = document.getElementById('clearHistory');
 
     // --- ICONS ---
     const speakerIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>`;
@@ -119,7 +147,6 @@
             const response = await fetch(url, options);
             if (!response.ok) {
                 if (response.status === 429 && retries > 0) {
-                    // Throttled, wait and retry
                     await new Promise(resolve => setTimeout(resolve, delay));
                     return fetchWithBackoff(url, options, retries - 1, delay * 2);
                 }
@@ -191,7 +218,6 @@
         const button = event.target.closest('button');
         if (!button) return; 
 
-        // Hide explain button on any new input
         explainBtn.classList.add('hidden');
 
         const { action, value, invValue } = button.dataset;
@@ -206,12 +232,7 @@
             
             case 'function':
                 if (currentExpression === "0") currentExpression = "";
-                // Handle functions that need a comma, like nPr and nCr
-                if (value.includes('combinations(') || value.includes('permutations(')) {
-                    currentExpression += value;
-                } else {
-                    currentExpression += isInverted ? invValue : value;
-                }
+                currentExpression += isInverted ? invValue : value;
                 
                 if (isInverted) {
                     isInverted = false;
@@ -229,6 +250,79 @@
                 break;
         }
         updateDisplay();
+    }
+
+    // --- KEYBOARD INPUT HANDLER ---
+    function handleKeyboardInput(event) {
+        const key = event.key;
+        let handled = false;
+
+        // Number keys
+        if (key >= '0' && key <= '9') {
+            if (currentExpression === "0") currentExpression = "";
+            currentExpression += key;
+            handled = true;
+        }
+        // Basic operators
+        else if (key === '+' || key === '-' || key === '*' || key === '/') {
+            if (key === '*') currentExpression += ' * ';
+            else if (key === '/') currentExpression += ' / ';
+            else if (key === '+') currentExpression += ' + ';
+            else if (key === '-') currentExpression += ' - ';
+            handled = true;
+        }
+        // Decimal point
+        else if (key === '.') {
+            currentExpression += '.';
+            handled = true;
+        }
+        // Equals
+        else if (key === '=' || key === 'Enter') {
+            calculateResult();
+            handled = true;
+        }
+        // Backspace
+        else if (key === 'Backspace') {
+            if (currentExpression.endsWith(' ')) {
+                currentExpression = currentExpression.slice(0, -3);
+            } else {
+                currentExpression = currentExpression.slice(0, -1);
+            }
+            handled = true;
+        }
+        // Clear
+        else if (key === 'Escape') {
+            currentExpression = "";
+            history = "";
+            lastAnswer = "";
+            handled = true;
+        }
+        // Parentheses
+        else if (key === '(') {
+            currentExpression += '(';
+            handled = true;
+        }
+        else if (key === ')') {
+            currentExpression += ')';
+            handled = true;
+        }
+        // Modulo
+        else if (key === '%') {
+            currentExpression += ' % ';
+            handled = true;
+        }
+        // Power (caret)
+        else if (key === '^') {
+            currentExpression += ' ^ ';
+            handled = true;
+        }
+
+        if (handled) {
+            event.preventDefault();
+            explainBtn.classList.add('hidden');
+            playClickSound();
+            updateDisplay();
+        }
     }
 
     async function handleCommand(command) {
@@ -261,6 +355,17 @@
                 wordProblemInput.value = "";
                 wordProblemStatus.textContent = "";
                 wordProblemModal.classList.remove('hidden');
+                break;
+
+            case 'statistics':
+                statisticsInput.value = "";
+                statisticsResults.innerHTML = "";
+                statisticsModal.classList.remove('hidden');
+                break;
+
+            case 'history':
+                updateHistoryDisplay();
+                historyModal.classList.remove('hidden');
                 break;
         }
     }
@@ -297,10 +402,7 @@
         if (currentExpression === "") return;
         
         try {
-            // Pre-process nPr and nCr for math.js
-            let evalExpression = currentExpression
-                .replace(/permutations\(/g, 'permutations(')
-                .replace(/combinations\(/g, 'combinations(');
+            let evalExpression = currentExpression;
 
             let result = mathInstance.evaluate(evalExpression);
             let formattedResult = mathInstance.format(result, { notation: 'auto', precision: 14 });
@@ -309,14 +411,19 @@
             currentExpression = formattedResult.toString();
             lastAnswer = currentExpression; 
             
-            // Show explain button on successful calculation
+            // Add to calculation history
+            calculationHistory.push({
+                expression: history + " " + currentExpression,
+                timestamp: new Date().toLocaleTimeString()
+            });
+
             explainBtn.classList.remove('hidden');
 
         } catch (error) {
             console.error("Calculation Error:", error);
             history = "Error";
             currentExpression = "Invalid Expression";
-            explainBtn.classList.add('hidden'); // Hide on error
+            explainBtn.classList.add('hidden');
         }
     }
 
@@ -342,8 +449,70 @@
         localStorage.setItem('calculator-sound', isSoundOn ? 'on' : 'off');
     }
 
+    // --- STATISTICS FUNCTIONS ---
+    function calculateStatistics() {
+        const input = statisticsInput.value.trim();
+        if (!input) {
+            statisticsResults.innerHTML = '<p class="text-red-500">Please enter numbers</p>';
+            return;
+        }
+
+        try {
+            const numbers = input.split(',').map(n => parseFloat(n.trim())).filter(n => !isNaN(n));
+            if (numbers.length === 0) {
+                statisticsResults.innerHTML = '<p class="text-red-500">Invalid input</p>';
+                return;
+            }
+
+            // Calculate statistics
+            const sum = numbers.reduce((a, b) => a + b, 0);
+            const mean = sum / numbers.length;
+            const variance = numbers.reduce((sum, n) => sum + Math.pow(n - mean, 2), 0) / numbers.length;
+            const stdDev = Math.sqrt(variance);
+            const min = Math.min(...numbers);
+            const max = Math.max(...numbers);
+            const median = (numbers.sort((a, b) => a - b)[Math.floor(numbers.length / 2)]);
+
+            statisticsResults.innerHTML = `
+                <div class="bg-blue-50 p-2 rounded"><strong>Count:</strong> ${numbers.length}</div>
+                <div class="bg-blue-50 p-2 rounded"><strong>Sum:</strong> ${sum.toFixed(4)}</div>
+                <div class="bg-blue-50 p-2 rounded"><strong>Mean:</strong> ${mean.toFixed(4)}</div>
+                <div class="bg-blue-50 p-2 rounded"><strong>Median:</strong> ${median.toFixed(4)}</div>
+                <div class="bg-blue-50 p-2 rounded"><strong>Min:</strong> ${min.toFixed(4)}</div>
+                <div class="bg-blue-50 p-2 rounded"><strong>Max:</strong> ${max.toFixed(4)}</div>
+                <div class="bg-blue-50 p-2 rounded"><strong>Std Dev:</strong> ${stdDev.toFixed(4)}</div>
+                <div class="bg-blue-50 p-2 rounded"><strong>Variance:</strong> ${variance.toFixed(4)}</div>
+            `;
+        } catch (error) {
+            statisticsResults.innerHTML = '<p class="text-red-500">Calculation error</p>';
+        }
+    }
+
+    function updateHistoryDisplay() {
+        if (calculationHistory.length === 0) {
+            historyList.innerHTML = '<p class="text-gray-500">No history yet</p>';
+            return;
+        }
+
+        historyList.innerHTML = calculationHistory.slice().reverse().map((item, index) => `
+            <div class="bg-gray-50 p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors" onclick="loadFromHistory('${item.expression}')">
+                <div class="font-mono text-sm">${item.expression}</div>
+                <div class="text-xs text-gray-500">${item.timestamp}</div>
+            </div>
+        `).join('');
+    }
+
+    // Global function to load from history
+    window.loadFromHistory = function(expression) {
+        currentExpression = expression.split(' = ')[1] || expression;
+        history = expression.split(' = ')[0] || "";
+        updateDisplay();
+        historyModal.classList.add('hidden');
+    };
+
     // --- EVENT LISTENERS ---
     calculator.addEventListener('click', handleButtonClick);
+    document.addEventListener('keydown', handleKeyboardInput);
     
     soundToggleBtn.addEventListener('click', (e) => {
         if (audioCtx && audioCtx.state === 'suspended') {
@@ -392,11 +561,10 @@
         explanationModal.classList.remove('hidden');
 
         const systemPrompt = "You are a math tutor. Explain the following calculation step-by-step. Be concise and clear. The user's calculation was:";
-        const userQuery = `${history} ${currentExpression}`; // e.g., "5 * 8 = 40"
+        const userQuery = `${history} ${currentExpression}`;
 
         const explanation = await callGemini(userQuery, systemPrompt);
         
-        // Simple formatting for the explanation
         const formattedExplanation = explanation
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -408,6 +576,29 @@
         explanationModal.classList.add('hidden');
     });
 
+    // --- STATISTICS MODAL LISTENERS ---
+    closeStatisticsModal.addEventListener('click', () => {
+        statisticsModal.classList.add('hidden');
+    });
+
+    calculateStatistics.addEventListener('click', calculateStatistics);
+
+    statisticsInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            calculateStatistics();
+        }
+    });
+
+    // --- HISTORY MODAL LISTENERS ---
+    closeHistoryModal.addEventListener('click', () => {
+        historyModal.classList.add('hidden');
+    });
+
+    clearHistoryBtn.addEventListener('click', () => {
+        calculationHistory = [];
+        updateHistoryDisplay();
+    });
+
     // --- INITIALIZATION ---
     
     function initializeSettings() {
@@ -417,7 +608,18 @@
             isSoundOn = false;
         }
         soundToggleBtn.innerHTML = isSoundOn ? speakerIcon : speakerMutedIcon;
+
+        // Load calculation history from localStorage
+        const savedHistory = localStorage.getItem('calculator-history');
+        if (savedHistory) {
+            calculationHistory = JSON.parse(savedHistory);
+        }
     }
+
+    // Save history to localStorage on every calculation
+    window.addEventListener('beforeunload', () => {
+        localStorage.setItem('calculator-history', JSON.stringify(calculationHistory));
+    });
 
     initializeSettings(); 
     updateDisplay(); 
