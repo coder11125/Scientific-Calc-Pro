@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<!-- Removed dark mode config -->
+<html lang="en"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Calc Pro</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Math.js for calculations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.min.js"></script>
+    
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Link to external CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- 
+      Calculator Body 
+    -->
+    <div id="calculator" class="max-w-xl w-full bg-white rounded-2xl shadow-xl p-4 sm:p-6 space-y-4"> 
+        
+        <!-- Gemini "Solve Word Problem" Button -->
+        <div>
+            <button class="btn-gemini-full" data-action="command" data-value="word-problem">Solve Word Problem ✨</button>
+        </div>
+        
+        <!-- Meta Toggles -->
+        <div class="flex justify-end space-x-2 -mt-2 mb-2">
+            <button id="soundToggle" class="btn-meta-toggle">
+                <!-- Speaker Icon will be inserted by JS -->
+            </button>
+        </div>
+        
+        <!-- Display Screen -->
+        <div class="bg-gray-50 rounded-lg p-4 text-right overflow-hidden shadow-inner">
+            <!-- History Display (Previous Calculation) -->
+            <div class="flex justify-between items-center">
+                <button id="explainBtn" class="hidden text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md hover:bg-blue-200 transition-colors">Explain ✨</button>
+                <div id="historyDisplay" class="h-8 text-lg text-gray-500 break-all truncate text-right flex-1"></div> 
+            </div>
+            <!-- 
+              Main Display (Current Expression) 
+            -->
+            <div id="mainDisplay" class="h-16 font-bold text-gray-900 overflow-hidden flex items-center justify-end" style="font-size: 3rem; line-height: 1;">0</div> 
+        </div>
+        
+        <!-- Button Container -->
+        <div class="space-y-2">
+            <!-- Scientific Functions Grid (6 columns) -->
+            <div class="grid grid-cols-6 gap-2">
+                <button class="btn btn-sci" data-action="toggle" data-value="angle" id="angleToggle">DEG</button>
+                <button class="btn btn-sci" data-action="toggle" data-value="inverse" id="invToggle">Inv</button>
+                <button class="btn btn-sci" data-action="function" data-value="sin(" data-inv-value="asin(" data-label="sin" data-inv-label="sin⁻¹">sin</button>
+                <button class="btn btn-sci" data-action="function" data-value="cos(" data-inv-value="acos(" data-label="cos" data-inv-label="cos⁻¹">cos</button>
+                <button class="btn btn-sci" data-action="function" data-value="tan(" data-inv-value="atan(" data-label="tan" data-inv-label="tan⁻¹">tan</button>
+                <button class="btn btn-sci" data-action="constant" data-value="pi">π</button>
+                
+                <button class="btn btn-sci" data-action="function" data-value="factorial(" data-label="x!" data-inv-label="x!">x!</button>
+                <button class="btn btn-sci" data-action="operator" data-value="(">(</button>
+                <button class="btn btn-sci" data-action="operator" data-value=")">)</button>
+                <button class="btn btn-sci" data-action="function" data-value="log10(" data-inv-value="pow(10," data-label="log" data-inv-label="10ˣ">log</button>
+                <button class="btn btn-sci" data-action="function" data-value="log(" data-inv-value="exp(" data-label="ln" data-inv-label="eˣ">ln</button>
+                <button class="btn btn-sci" data-action="constant" data-value="e">e</button>
+
+                <button class="btn btn-sci" data-action="operator" data-value="^(" data-inv-value="^(1/" data-label="xʸ" data-inv-label="ʸ√x">xʸ</button>
+                <button class="btn btn-sci" data-action="function" data-value="sqrt(" data-inv-value="square(" data-label="√" data-inv-label="x²">√</button>
+                <button class="btn btn-sci" data-action="function" data-value="abs(" data-label="abs">abs</button>
+                <button class="btn btn-sci" data-action="function" data-value="permutations(", " data-label="nPr">nPr</button>
+                <button class="btn btn-sci" data-action="function" data-value="combinations(", " data-label="nCr">nCr</button>
+                <button class="btn btn-sci" data-action="function" data-value="1/(", " data-inv-value="1/(" data-label="1/x" data-inv-label="1/x">1/x</button>
+            </div>
+            
+            <!-- Separator Line -->
+            <hr class="border-gray-200">
+
+            <!-- Number Pad & Basic Operations (4 columns) -->
+            <div class="grid grid-cols-4 gap-2">
+                <button class="btn btn-ctrl" data-action="command" data-value="clear">AC</button>
+                <button class="btn btn-ctrl" data-action="command" data-value="backspace">⌫</button>
+                <button class="btn btn-ctrl" data-action="operator" data-value=" % ">%</button>
+                <button class="btn btn-op" data-action="operator" data-value=" / ">÷</button>
+
+                <button class="btn btn-num" data-action="number" data-value="7">7</button>
+                <button class="btn btn-num" data-action="number" data-value="8">8</button>
+                <button class="btn btn-num" data-action="number" data-value="9">9</button>
+                <button class="btn btn-op" data-action="operator" data-value=" * ">×</button>
+
+                <button class="btn btn-num" data-action="number" data-value="4">4</button>
+                <button class="btn btn-num" data-action="number" data-value="5">5</button>
+                <button class="btn btn-num" data-action="number" data-value="6">6</button>
+                <button class="btn btn-op" data-action="operator" data-value=" - ">−</button>
+                
+                <button class="btn btn-num" data-action="number" data-value="1">1</button>
+                <button class="btn btn-num" data-action="number" data-value="2">2</button>
+                <button class="btn btn-num" data-action="number" data-value="3">3</button>
+                <button class="btn btn-op" data-action="operator" data-value=" + ">+</button>
+
+                <button class="btn btn-ctrl" data-action="command" data-value="ans">Ans</button>
+                <button class="btn btn-num" data-action="number" data-value="0">0</button>
+                <button class="btn btn-num" data-action="number" data-value=".">.</button>
+                <button class="btn btn-op" data-action="command" data-value="equals">=</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gemini Modals -->
+
+    <!-- Word Problem Input Modal -->
+    <div id="wordProblemModal" class="modal-overlay hidden">
+        <div class="modal-content space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-semibold text-gray-800">Solve Word Problem ✨</h3>
+                <button id="closeWordProblemModal" class="modal-close-btn">&times;</button>
+            </div>
+            <p class="text-gray-600">Type your math problem below (e.g., "15% of 300" or "sine of 90 degrees").</p>
+            <div>
+                <textarea id="wordProblemInput" class="w-full h-24 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 5 apples + 3 apples..."></textarea>
+            </div>
+            <div id="wordProblemStatus" class="text-sm text-gray-500"></div>
+            <button id="submitWordProblem" class="w-full btn btn-gemini">Generate Expression</button>
+        </div>
+    </div>
+
+    <!-- Explanation Display Modal -->
+    <div id="explanationModal" class="modal-overlay hidden">
+        <div class="modal-content space-y-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-semibold text-gray-800">Calculation Explained ✨</h3>
+                <button id="closeExplanationModal" class="modal-close-btn">&times;</button>
+            </div>
+            <!-- Content will be injected by JS -->
+            <div id="explanationContent" class="text-gray-700 space-y-2">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Link to external JS -->
+    <script src="script.js"></script>
+</body>
+</html>
